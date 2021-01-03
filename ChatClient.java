@@ -1,4 +1,4 @@
-package socketChat;
+package chatproject;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -6,6 +6,9 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
+import socketChat.Client;
+
 import javax.swing.JButton;
 import javax.swing.JTextArea;
 import javax.swing.JLabel;
@@ -15,16 +18,30 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import javax.swing.JComboBox;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.DefaultComboBoxModel;
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.JInternalFrame;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.Window.Type;
 
 public class ChatClient extends JFrame {
 
@@ -50,8 +67,10 @@ public class ChatClient extends JFrame {
 	private JLabel lblNewLabel_2;
 	private JLabel lblNewLabel_3;
 	private JLabel lblNewLabel_4;
+	JButton send = new JButton("Send");
+	private List<Integer> keys = new ArrayList<Integer>();
 	
-
+	
 	/**
 	 * Launch the application.
 	 */
@@ -86,8 +105,10 @@ public class ChatClient extends JFrame {
 	 * given a String, this method will handle that message and decode it to see which action to perform.
 	 * @param msg
 	 * @throws IOException
+	 * @throws UnsupportedAudioFileException 
+	 * @throws LineUnavailableException 
 	 */
-	public void Handle(String msg) throws IOException {
+	public void Handle(String msg) throws IOException, LineUnavailableException, UnsupportedAudioFileException {
 		String decode[] = null;
 		if(msg.contains("newuser")) {
 			decode = msg.split("-");
@@ -100,12 +121,63 @@ public class ChatClient extends JFrame {
 		}else if(msg.contains("exit")){
 			socket.close();
 			System.exit(0);
-		}else {
+		}else if(msg.contains("ClientTyping")) {
+			decode = msg.split("-");
+			screen.setText(discussion + decode[1] + " is typing...");
+			wait(150);
+			
+		}
+		
+		
+		else {
+			File file = new File("audi.wav");
+			String path = file.getAbsolutePath();
+			//makeSound("audi.wav");
 			UpdateScreen(msg);
 		}
 		
 	}
 	
+	public void wait( int time) {
+
+		new Thread() {
+			public void run() {
+				try {
+					TimeUnit.MILLISECONDS.sleep(time);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}.run();
+		screen.setText(discussion);
+	}
+	
+	
+	
+	
+	
+	static void playSound(String soundFile) throws LineUnavailableException, MalformedURLException, UnsupportedAudioFileException, IOException {
+	    File f = new File(soundFile);
+	    AudioInputStream audioIn = AudioSystem.getAudioInputStream(f.toURI().toURL());  
+	    Clip clip = AudioSystem.getClip();
+	    clip.open(audioIn);
+	    clip.start();
+	}
+	
+	
+	public static void makeSound(String str){
+	    File sound = new File(str);
+	    
+
+	    try{
+	        Clip clip = AudioSystem.getClip();
+	        clip.open(AudioSystem.getAudioInputStream(sound));
+	        clip.start();
+	    } catch (Exception e){
+	        e.printStackTrace();
+	    }
+	}
 	
 	
 
@@ -113,6 +185,25 @@ public class ChatClient extends JFrame {
 	 * Create the frame.
 	 */
 	public ChatClient() {
+		try {
+		    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+		        if ("Nimbus".equals(info.getName())) {
+		            UIManager.setLookAndFeel(info.getClassName());
+		            break;
+		        }
+		    }
+		} catch (UnsupportedLookAndFeelException e) {
+		    // handle exception
+		} catch (ClassNotFoundException e) {
+		    // handle exception
+		} catch (InstantiationException e) {
+		    // handle exception
+		} catch (IllegalAccessException e) {
+		    // handle exception
+		}
+
+		
+		
 		setResizable(false);
 		screen.setEditable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -128,6 +219,10 @@ public class ChatClient extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				try {
+					
+					if(!connect.isEnabled()) {
+						return;
+					}
 					if(username.getText().equals("") || address.getText().equals("") || port.getText().equals("")) { //avoiding bug by checking if the given input if valid (fail fast)
 						screen.setText("Please enter a valid username,\n address and port number");
 						return;
@@ -144,6 +239,12 @@ public class ChatClient extends JFrame {
 								}
 							} catch (IOException e) {
 								
+							} catch (LineUnavailableException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							} catch (UnsupportedAudioFileException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
 							}
 							
 						}
@@ -159,7 +260,7 @@ public class ChatClient extends JFrame {
 					username.setEditable(false);
 					connect.setEnabled(false);
 					
-				} catch (NumberFormatException | IOException e1) {
+				} catch (NumberFormatException | IOException  e1) {
 					// TODO Auto-generated catch block
 					if(e1.getMessage().equals("Connection refused")) {
 						screen.setText("Connection refused because the server \n is not On yet");
@@ -195,6 +296,22 @@ public class ChatClient extends JFrame {
 			//sending message by simple pressing Enter
 			@Override
 			public void keyPressed(KeyEvent e) {
+				if(!send.isEnabled()) {
+					return;
+				}
+				
+				
+				if(e.getKeyCode() != KeyEvent.VK_ENTER) {
+					try {
+						clientout.writeUTF("ClientTyping-" +reciever+ "-" +username.getText());
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					};
+				}
+				
+				
+				
 				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
 					try {
 						if(message.getText().equals("")) { //not allowing empty messages
@@ -218,12 +335,15 @@ public class ChatClient extends JFrame {
 		contentPane.add(message);
 		message.setColumns(10);
 		
-		JButton send = new JButton("Send");
+		
 		send.addMouseListener(new MouseAdapter() {
 			//sending a message by simply clicking on the Send button
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				try {
+					if(!send.isEnabled()) {
+						return;
+					}
 					if(message.getText().equals("")) { //not allowing empty messages
 						return;
 					}
@@ -272,6 +392,9 @@ public class ChatClient extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				try {
+					if(!disconnect.isEnabled()) {
+						return;
+					}
 					clientout.writeUTF("disconnect-" + user); //sending the server a message to disconnect the client
 					socket.close(); //closing the socket
 					System.exit(0); //closing the GUI.
