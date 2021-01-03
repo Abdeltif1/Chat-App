@@ -1,4 +1,4 @@
-package socketChat;
+package chatproject;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -39,7 +39,11 @@ public class ClientReadThread extends Thread {
 					decode = msg.split("=");
 					outToClient = new DataOutputStream(server.clients.get(decode[0]).getOutputStream());
 					outToClient.writeUTF(user +":"+decode[1]);
-				}	
+				}if(msg.contains("ClientTyping")) {
+					decode = msg.split("-");
+					outToClient = new DataOutputStream(server.clients.get(decode[1]).getOutputStream());
+					outToClient.writeUTF("ClientTyping-" +decode[2]);
+				}
 				
 			}
 		} catch (IOException e) {
