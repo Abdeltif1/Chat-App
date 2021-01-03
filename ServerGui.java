@@ -1,4 +1,4 @@
-package socketChat;
+package chatproject;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -6,8 +6,6 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-
-
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
@@ -27,7 +25,11 @@ import javax.swing.JScrollPane;
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.UIManager.LookAndFeelInfo;
+
 import java.awt.Color;
+import javax.swing.JFormattedTextField;
 
 public class ServerGui extends JFrame {
 
@@ -175,7 +177,8 @@ public class ServerGui extends JFrame {
 	 * Create the frame.
 	 */
 	public ServerGui() {
-		setBackground(UIManager.getColor("info"));
+		
+		
 		setAlwaysOnTop(true);
 		screen.setEditable(false);
 		disco.setEnabled(false); //avoid bugs
@@ -315,5 +318,4 @@ public class ServerGui extends JFrame {
 		disco.setBounds(171, 324, 117, 29);
 		contentPane.add(disco);
 	}
-
 }
