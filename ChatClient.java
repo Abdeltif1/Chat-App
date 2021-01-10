@@ -130,9 +130,6 @@ public class ChatClient extends JFrame {
 		
 		
 		else {
-			File file = new File("audi.wav");
-			String path = file.getAbsolutePath();
-			//makeSound("audi.wav");
 			UpdateScreen(msg);
 		}
 		
